@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>推筒子</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:'Microsoft JhengHei','PingFang TC',sans-serif;
+  background:#1a0800;
+  background-image:
+    repeating-linear-gradient(45deg,rgba(255,180,50,.04) 0,rgba(255,180,50,.04) 1px,transparent 0,transparent 50%),
+    repeating-linear-gradient(-45deg,rgba(255,180,50,.04) 0,rgba(255,180,50,.04) 1px,transparent 0,transparent 50%);
+  background-size:12px 12px;
+  min-height:100dvh;
+  display:flex;
+  justify-content:center;
+  overflow-x:hidden;
+}
+
+/* ── GAME CONTAINER ── */
+#game{
+  width:100%;
+  max-width:440px;
+  min-height:100dvh;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  overflow:hidden;
+}
+
+/* ── TOP BAR ── */
+#topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:6px 12px;
+  background:rgba(0,0,0,.65);
+  color:#fff;
+  font-size:11px;
+  flex-shrink:0;
+  z-index:10;
+}
+.menu-icon{font-size:22px;cursor:pointer;color:#ffd700;line-height:1}
+.bet-info{text-align:right;line-height:1.6;color:#ffe}
+.bet-info span{color:#ffd700;font-weight:bold}
+
+/* ── DEALER SECTION ── */
+#dealer-section{
+  background:linear-gradient(180deg,#3a0060 0%,#5a1090 60%,#6a20a8 100%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:6px 0 10px;
+  flex-shrink:0;
+  position:relative;
+  border-bottom:3px solid rgba(255,215,0,.3);
+}
+.shoe-wrap{
+  position:absolute;top:8px;right:10px;
+  display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+}
+.shoe-bar{
+  width:90px;height:10px;
+  background:rgba(0,0,0,.4);
+  border-radius:5px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.2);
+}
+.shoe-fill{height:100%;background:linear-gradient(90deg,#44ff44,#00cc00);border-radius:5px;transition:width .5s}
+.shoe-label{font-size:10px;color:rgba(255,255,255,.6)}
+
+/* Dealer figure */
+.dealer-figure{
+  width:80px;height:72px;
+  background:linear-gradient(135deg,#c8906080,#a06040);
+  border-radius:40px 40px 0 0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:44px;
+  border:2px solid rgba(255,215,0,.4);
+  border-bottom:none;
+}
+.game-logo{
+  font-size:22px;font-weight:900;
+  color:#ffd700;
+  text-shadow:0 0 12px rgba(255,215,0,.8),2px 2px 4px rgba(0,0,0,.9);
+  letter-spacing:3px;
+  margin:4px 0;
+}
+.dealer-cards-row{display:flex;gap:10px;align-items:center}
+#dealer-score-label{
+  font-size:13px;font-weight:bold;
+  color:#ffd700;
+  background:rgba(0,0,0,.7);
+  padding:2px 10px;border-radius:10px;
+  min-width:70px;text-align:center;
+  min-height:22px;
+}
+
+/* ── MAIN TABLE ── */
+#table{
+  background:linear-gradient(180deg,#6a20a8 0%,#5a1090 100%);
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  overflow:hidden;
+}
+
+/* Bet banner */
+#bet-banner{
+  text-align:center;
+  padding:5px;
+  font-size:16px;
+  font-weight:bold;
+  color:#fff;
+  background:rgba(0,0,0,.35);
+  letter-spacing:1px;
+  flex-shrink:0;
+}
+
+/* ── THREE ZONES ── */
+#zones-area{
+  display:flex;
+  gap:6px;
+  padding:8px 8px 4px;
+  flex:1;
+}
+.zone{
+  flex:1;
+  background:rgba(0,0,0,.2);
+  border-radius:10px;
+  border:2px solid rgba(255,255,255,.15);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:6px 4px 8px;
+  cursor:default;
+  transition:border-color .15s,background .15s;
+  position:relative;
+  overflow:hidden;
+}
+.zone.bettable{cursor:pointer}
+.zone.bettable:active{background:rgba(255,255,255,.15)}
+.zone-emblem{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  font-size:42px;opacity:.06;pointer-events:none;
+  user-select:none;
+}
+.zone-name{
+  font-size:12px;color:rgba(255,255,255,.65);
+  margin-bottom:4px;letter-spacing:1px;
+  text-shadow:0 1px 3px rgba(0,0,0,.8);
+}
+.zone-cards{
+  display:flex;gap:5px;
+  min-height:68px;
+  align-items:center;justify-content:center;
+}
+.zone-score{
+  font-size:12px;color:#ffd;
+  min-height:16px;text-align:center;
+  margin:2px 0;
+}
+.zone-bet-box{
+  background:rgba(0,0,0,.55);
+  border-radius:8px;
+  min-width:54px;text-align:center;
+  padding:2px 8px;
+  font-size:14px;font-weight:bold;
+  color:#ffd700;
+  border:1px solid rgba(255,215,0,.25);
+}
+.result-badge{
+  position:absolute;bottom:28px;left:0;right:0;
+  text-align:center;font-size:24px;font-weight:900;
+  pointer-events:none;z-index:5;
+  text-shadow:0 2px 8px rgba(0,0,0,.9);
+}
+.result-badge.win{color:#ff4444;animation:badge-pop .4s ease}
+.result-badge.lose{color:#44cc44;animation:badge-pop .4s ease}
+@keyframes badge-pop{0%{transform:scale(.5);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes zone-win-flash{0%,100%{box-shadow:inset 0 0 0 0 rgba(255,80,80,0)}50%{box-shadow:inset 0 0 20px 4px rgba(255,80,80,.5)}}
+.zone.win-flash{animation:zone-win-flash .5s ease 2}
+
+/* ── OVERLAY: dice / start-bet ── */
+#dice-overlay{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  align-items:center;justify-content:center;
+  flex-direction:column;gap:16px;
+  z-index:50;
+}
+.dice-row{display:flex;gap:20px}
+.die{
+  width:62px;height:62px;
+  background:#fff;border-radius:10px;
+  border:2px solid #ddd;
+  display:flex;align-items:center;justify-content:center;
+  font-size:34px;
+  box-shadow:0 4px 16px rgba(0,0,0,.6);
+  animation:die-in .45s cubic-bezier(.22,1,.36,1);
+}
+@keyframes die-in{0%{transform:scale(.2) rotate(-180deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.dice-total{color:#ffd700;font-size:15px;font-weight:bold;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+
+#start-bet-overlay{
+  position:absolute;inset:0;
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:30;pointer-events:none;
+}
+.start-bet-sign{
+  padding:14px 36px;
+  background:rgba(0,0,0,.72);
+  border:2px solid #ffd700;
+  border-radius:16px;
+  color:#ffd700;
+  font-size:28px;font-weight:900;
+  text-shadow:0 0 20px rgba(255,215,0,.9);
+  animation:sign-pulse .8s ease-in-out infinite alternate;
+}
+@keyframes sign-pulse{from{transform:scale(1);opacity:.9}to{transform:scale(1.05);opacity:1}}
+
+/* ── ACTION BUTTONS ── */
+#actions{
+  display:flex;gap:6px;
+  padding:5px 8px;
+  flex-shrink:0;
+}
+.act-btn{
+  flex:1;padding:10px 2px;
+  border:none;border-radius:22px;
+  font-size:13px;font-weight:bold;
+  cursor:pointer;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+  transition:filter .15s,opacity .15s;
+}
+.act-btn:disabled,.act-btn.off{opacity:.38;cursor:not-allowed}
+.btn-next{background:linear-gradient(180deg,#5bbfbf,#2a8888)}
+.btn-cancel{background:linear-gradient(180deg,#f8a040,#c06810)}
+.btn-confirm{background:linear-gradient(180deg,#66cc55,#358824)}
+
+/* ── CHIP ROW ── */
+#chips-area{
+  display:flex;gap:6px;
+  padding:3px 8px 6px;
+  align-items:center;
+  flex-shrink:0;
+}
+.chip-btn{
+  flex:1;padding:8px 2px;
+  border:none;border-radius:22px;
+  font-size:13px;font-weight:bold;
+  cursor:pointer;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+  transition:box-shadow .1s;
+}
+.chip-more{background:linear-gradient(180deg,#66aa77,#3a6644);font-size:12px}
+.chip-val{background:linear-gradient(180deg,#dd77aa,#994466)}
+.chip-val.sel{box-shadow:0 0 0 3px #ffd700,0 0 8px rgba(255,215,0,.5)}
+.chip-repeat{background:linear-gradient(180deg,#dd5533,#aa2211)}
+.chip-repeat:disabled,.chip-repeat.off{opacity:.38;cursor:not-allowed}
+
+/* ── TREND BOARD ── */
+#trend-board{
+  background:rgba(0,0,0,.7);
+  padding:4px 8px;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  flex-shrink:0;
+}
+.trend-row{display:flex;align-items:center;gap:3px}
+.trend-label{
+  color:#ffe;font-size:11px;
+  width:28px;flex-shrink:0;
+}
+.trend-cells{
+  flex:1;display:flex;gap:2px;overflow:hidden;
+}
+.tcell{
+  width:20px;height:20px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:bold;line-height:1;
+}
+.tcell.tw{color:#ff4444}
+.tcell.tl{color:#44cc44}
+.tcell.te{color:rgba(255,255,255,.2);font-size:11px}
+.trend-open-btn{
+  display:flex;flex-direction:column;align-items:center;
+  color:#ffd700;font-size:10px;cursor:pointer;
+  margin-left:4px;flex-shrink:0;gap:1px;
+}
+.trend-open-btn:hover{color:#fff}
+
+/* ── PLAYER BAR ── */
+#player-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:6px 12px;
+  background:rgba(0,0,0,.8);
+  flex-shrink:0;
+}
+.avatar{
+  width:38px;height:38px;border-radius:50%;
+  background:linear-gradient(135deg,#4488ff,#44ffcc);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+  border:2px solid rgba(255,255,255,.2);
+}
+.player-info{flex:1}
+.player-id{font-size:11px;color:#888}
+.player-bal{font-size:16px;font-weight:bold;color:#ffd700}
+.auto-btn{
+  padding:9px 14px;border:none;border-radius:22px;
+  font-size:12px;font-weight:bold;cursor:pointer;
+  color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5);
+  background:linear-gradient(180deg,#dd5533,#aa2211);
+  transition:background .2s;
+  white-space:nowrap;
+}
+.auto-btn.on{background:linear-gradient(180deg,#44cc44,#229922)}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  position:absolute;left:0;top:0;bottom:0;
+  width:64px;
+  background:rgba(0,0,0,.7);
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  gap:16px;
+  align-items:center;
+  z-index:200;
+  padding:20px 0;
+  backdrop-filter:blur(4px);
+}
+.side-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;color:#ffd700;
+  font-size:11px;text-shadow:0 1px 3px rgba(0,0,0,.8);
+  padding:8px 0;width:100%;
+  transition:background .15s;
+}
+.side-btn:hover{background:rgba(255,255,255,.1)}
+.side-btn .ico{font-size:22px}
+
+/* ── NOTIFICATION TOAST ── */
+#toast{
+  position:fixed;top:54px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.85);color:#fff;
+  padding:8px 22px;border-radius:22px;
+  font-size:13px;z-index:9000;
+  opacity:0;transition:opacity .25s;pointer-events:none;
+  white-space:nowrap;
+}
+
+/* ── MODAL ── */
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.72);
+  z-index:5000;
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+}
+.modal{
+  background:#fff9e8;
+  border-radius:14px;
+  width:100%;max-width:390px;
+  max-height:88vh;
+  overflow-y:auto;
+  position:relative;
+  padding:16px 16px 20px;
+}
+.modal-title{
+  text-align:center;font-size:18px;font-weight:bold;
+  color:#6a0080;
+  padding-bottom:10px;margin-bottom:12px;
+  border-bottom:2px solid rgba(106,0,128,.2);
+}
+.modal-close{
+  position:absolute;right:12px;top:12px;
+  font-size:18px;cursor:pointer;color:#888;
+  background:none;border:none;line-height:1;
+}
+.modal-close:hover{color:#333}
+
+/* Modal inner styles */
+.rule-body{font-size:13px;color:#333;line-height:1.8}
+.rule-body h4{color:#6a0080;margin:10px 0 4px}
+.rule-body .hl{color:#cc2200;font-weight:bold}
+
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid #eee;
+}
+.settings-row label{font-size:14px;color:#444}
+input[type=range]{flex:1;margin:0 12px;accent-color:#6a0080}
+
+.chip-edit-wrap{display:flex;gap:10px;margin-top:14px}
+.chip-edit-group{flex:1;display:flex;flex-direction:column;gap:5px}
+.chip-edit-group label{font-size:12px;color:#666;text-align:center}
+.chip-edit-group input{
+  border:1.5px solid #ccc;border-radius:8px;
+  padding:8px 4px;font-size:15px;
+  text-align:center;width:100%;
+}
+.modal-save-btn{
+  margin-top:14px;width:100%;padding:12px;
+  background:#6a0080;color:#fff;
+  border:none;border-radius:10px;
+  font-size:14px;font-weight:bold;cursor:pointer;
+}
+.modal-save-btn:hover{background:#880099}
+
+.hist-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.hist-table th{color:#6a0080;padding:6px 3px;border-bottom:2px solid #ddd;font-size:11px}
+.hist-table td{padding:5px 3px;text-align:center;border-bottom:1px solid #f0e8e8}
+.hist-win td{color:#009900}
+.hist-lose td{color:#cc0000}
+.hist-empty{text-align:center;padding:24px;color:#aaa;font-size:13px}
+
+.trend-stat-zone{margin-bottom:14px}
+.trend-stat-zone h4{font-size:14px;color:#6a0080;margin-bottom:6px}
+.trend-pct{font-size:12px;color:#666;margin-bottom:5px}
+.trend-dots{display:flex;flex-wrap:wrap;gap:2px}
+.trend-dot{font-size:13px;font-weight:bold}
+.trend-dot.w{color:#cc2200}
+.trend-dot.l{color:#229922}
+
+/* ── CARDS ── */
+.card{
+  width:42px;height:60px;
+  border-radius:5px;
+  box-shadow:0 2px 6px rgba(0,0,0,.55);
+  flex-shrink:0;
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.card-back{background:#2a7020}
+.card-face{background:#fff;border:1px solid #ccc}
+.card svg{width:100%;height:100%;display:block}
+
+/* Shake */
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.shake{animation:shake .3s ease}
+
+/* Tianwang glow */
+@keyframes tianwang-glow{0%,100%{filter:drop-shadow(0 0 6px rgba(255,215,0,.6))}50%{filter:drop-shadow(0 0 18px rgba(255,215,0,1))}}
+.tianwang-card{animation:tianwang-glow .6s ease 4}
+</style>
+</head>
+<body>
+<div id="game">
+
+  <!-- TOP BAR -->
+  <div id="topbar">
+    <div class="menu-icon" onclick="toggleSidebar()">☰</div>
+    <div class="bet-info">
+      最小下注:<span id="s-min">1</span>&nbsp;
+      最大下注:<span id="s-max">150,000</span>&nbsp;
+      當前下注:<span id="s-cur">0</span>
+    </div>
+  </div>
+
+  <!-- DEALER SECTION -->
+  <div id="dealer-section">
+    <div class="shoe-wrap">
+      <div class="shoe-label" id="shoe-label">第1/5局</div>
+      <div class="shoe-bar"><div class="shoe-fill" id="shoe-fill" style="width:100%"></div></div>
+    </div>
+    <div class="dealer-figure">👩</div>
+    <div class="game-logo">口推筒子☆</div>
+    <div class="dealer-cards-row">
+      <div id="dealer-cards" style="display:flex;gap:8px;min-height:64px;align-items:center"></div>
+    </div>
+    <div id="dealer-score-label"></div>
+  </div>
+
+  <!-- MAIN TABLE -->
+  <div id="table">
+
+    <!-- Dice overlay (inside table) -->
+    <div id="dice-overlay">
+      <div class="dice-row" id="dice-row"></div>
+      <div class="dice-total" id="dice-total"></div>
+    </div>
+
+    <!-- Start-bet flash -->
+    <div id="start-bet-overlay">
+      <div class="start-bet-sign">開始下注</div>
+    </div>
+
+    <!-- Banner -->
+    <div id="bet-banner">請下注</div>
+
+    <!-- Three zones -->
+    <div id="zones-area">
+      <div class="zone" id="zone-shun" onclick="placeBet('shun')">
+        <div class="zone-emblem">☯</div>
+        <div class="zone-name">順　門</div>
+        <div class="zone-cards" id="cards-shun"></div>
+        <div class="zone-score" id="score-shun"></div>
+        <div class="zone-bet-box" id="bet-shun">0</div>
+      </div>
+      <div class="zone" id="zone-tian" onclick="placeBet('tian')">
+        <div class="zone-emblem">天</div>
+        <div class="zone-name">天　門</div>
+        <div class="zone-cards" id="cards-tian"></div>
+        <div class="zone-score" id="score-tian"></div>
+        <div class="zone-bet-box" id="bet-tian">0</div>
+      </div>
+      <div class="zone" id="zone-di" onclick="placeBet('di')">
+        <div class="zone-emblem">地</div>
+        <div class="zone-name">地　門</div>
+        <div class="zone-cards" id="cards-di"></div>
+        <div class="zone-score" id="score-di"></div>
+        <div class="zone-bet-box" id="bet-di">0</div>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div id="actions">
+      <button class="act-btn btn-next off" id="btn-next" onclick="nextRound()">下一局</button>
+      <button class="act-btn btn-cancel off" id="btn-cancel" onclick="cancelBet()">取消下注</button>
+      <button class="act-btn btn-confirm off" id="btn-confirm" onclick="confirmBet()">確認下注</button>
+    </div>
+
+    <!-- Chip row -->
+    <div id="chips-area">
+      <button class="chip-btn chip-more" onclick="openChipEditor()">更多</button>
+      <button class="chip-btn chip-val" id="cv0" onclick="selectChip(0)">1</button>
+      <button class="chip-btn chip-val" id="cv1" onclick="selectChip(1)">2</button>
+      <button class="chip-btn chip-val" id="cv2" onclick="selectChip(2)">5</button>
+      <button class="chip-btn chip-repeat off" id="btn-repeat" onclick="repeatBet()">重複</button>
+    </div>
+  </div><!-- /table -->
+
+  <!-- TREND BOARD -->
+  <div id="trend-board">
+    <div class="trend-row">
+      <span class="trend-label">順門</span>
+      <div class="trend-cells" id="tr-shun"></div>
+      <div class="trend-open-btn" onclick="openTrendPanel()" style="row-gap:0">
+        <span style="font-size:16px">📊</span><span>走勢</span>
+      </div>
+    </div>
+    <div class="trend-row">
+      <span class="trend-label">天門</span>
+      <div class="trend-cells" id="tr-tian"></div>
+    </div>
+    <div class="trend-row">
+      <span class="trend-label">地門</span>
+      <div class="trend-cells" id="tr-di"></div>
+    </div>
+  </div>
+
+  <!-- PLAYER BAR -->
+  <div id="player-bar">
+    <div class="avatar" id="avatar">🧑</div>
+    <div class="player-info">
+      <div class="player-id" id="player-id">1a91023700</div>
+      <div class="player-bal" id="player-bal">10,000.00</div>
+    </div>
+    <button class="auto-btn" id="auto-btn" onclick="toggleAutoBet()">自動下注</button>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="side-btn" onclick="openSettings()">
+      <span class="ico">⚙️</span><span>設置</span>
+    </div>
+    <div class="side-btn" onclick="openRules()">
+      <span class="ico">📋</span><span>規則</span>
+    </div>
+    <div class="side-btn" onclick="openHistory()">
+      <span class="ico">📜</span><span>記錄</span>
+    </div>
+  </div>
+
+</div><!-- /game -->
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════
+const MIN_BET = 1, MAX_BET = 150000, INIT_BAL = 10000;
+const ROUNDS_PER_SHOE = 5;
+const ZONE_KEYS = ['shun','tian','di'];
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let G = {
+  phase: 'IDLE',          // IDLE DEAL_PREP BETTING REVEAL SETTLEMENT
+  deck: [],
+  roundInShoe: 0,         // 1-5
+  hands: {dealer:[],shun:[],tian:[],di:[]},
+  bets:  {shun:0,tian:0,di:0},
+  lastBets: {shun:0,tian:0,di:0},
+  results: {shun:null,tian:null,di:null}, // 'win'|'lose'|null
+  balance: INIT_BAL,
+  chips: [1,2,5],
+  selChip: 0,
+  autoBet: false,
+  canRepeat: false,
+  history: [],            // last 100 bet records
+  trends: [],             // [{shun:bool,tian:bool,di:bool}] newest-first, max 100
+  musicVol: 0.5,
+  sfxVol: 0.8,
+};
+
+// ═══════════════════════════════════════════════
+// DECK
+// ═══════════════════════════════════════════════
+const NUM_NAMES = ['','一','二','三','四','五','六','七','八','九'];
+
+function createDeck() {
+  const deck = [];
+  for (let v = 1; v <= 9; v++) {
+    for (let i = 0; i < 4; i++)
+      deck.push({value: v, type:'tong', label: NUM_NAMES[v]+'筒'});
+  }
+  for (let i = 0; i < 4; i++)
+    deck.push({value: 0.5, type:'blank', label:'白板'});
+  return deck;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// ═══════════════════════════════════════════════
+// HAND EVALUATION
+// ═══════════════════════════════════════════════
+function calcPoints(cards) {
+  const sum = cards[0].value + cards[1].value;
+  const base = Math.floor(sum) % 10;
+  const half = (sum % 1) >= 0.5 ? 0.5 : 0;
+  return base + half;
+}
+
+// rank: 'tianwang'(4) > 'pair'(3) > 'points'(2) > 'bieshi'(1)
+function evalHand(cards) {
+  const [a, b] = cards;
+  if (a.type==='blank' && b.type==='blank')
+    return {rank:'tianwang', pairVal:null, points:0};
+  if (a.type==='tong' && b.type==='tong' && a.value===b.value)
+    return {rank:'pair', pairVal:a.value, points:0};
+  const pts = calcPoints(cards);
+  if (pts === 0)
+    return {rank:'bieshi', pairVal:null, points:0};
+  return {rank:'points', pairVal:null, points:pts};
+}
+
+const RANK_W = {tianwang:4, pair:3, points:2, bieshi:1};
+
+// Returns true ONLY if player STRICTLY beats dealer
+function playerBeatsDealer(pCards, dCards) {
+  const p = evalHand(pCards), d = evalHand(dCards);
+  if (RANK_W[p.rank] > RANK_W[d.rank]) return true;
+  if (RANK_W[p.rank] < RANK_W[d.rank]) return false;
+  // same rank
+  if (p.rank==='tianwang') return false; // both → dealer wins
+  if (p.rank==='bieshi')   return false; // both → dealer wins
+  if (p.rank==='pair') {
+    if (p.pairVal > d.pairVal) return true;
+    return false; // same or lower → dealer wins
+  }
+  // both 'points'
+  if (p.points > d.points) return true;
+  if (p.points < d.points) return false;
+  // same points → compare highest single card
+  const pMax = Math.max(pCards[0].value, pCards[1].value);
+  const dMax = Math.max(dCards[0].value, dCards[1].value);
+  return pMax > dMax; // strictly greater; tie → dealer wins
+}
+
+function handLabel(cards) {
+  const h = evalHand(cards);
+  if (h.rank==='tianwang') return '天王';
+  if (h.rank==='pair')     return NUM_NAMES[h.pairVal]+'寶';
+  if (h.rank==='bieshi')   return '鱉十';
+  const pts = h.points;
+  const i   = Math.floor(pts);
+  const half = (pts%1)>=0.5;
+  return NUM_NAMES[i]+'點'+(half?'半':'');
+}
+
+// ═══════════════════════════════════════════════
+// CARD SVG RENDERING
+// ═══════════════════════════════════════════════
+// [cx%, cy%] in 0-100 space relative to 42x60 card
+const PIPS = {
+  1: [[50,50]],
+  2: [[50,27],[50,73]],
+  3: [[72,21],[50,50],[28,79]],
+  4: [[28,27],[72,27],[28,73],[72,73]],
+  5: [[28,22],[72,22],[50,50],[28,78],[72,78]],
+  6: [[28,18],[72,18],[28,50],[72,50],[28,82],[72,82]],
+  7: [[28,14],[72,14],[28,43],[72,43],[50,57],[28,86],[72,86]],
+  8: [[28,12],[72,12],[28,37],[72,37],[28,62],[72,62],[28,87],[72,87]],
+  9: [[24,17],[50,17],[76,17],[24,50],[50,50],[76,50],[24,83],[50,83],[76,83]],
+};
+const PIP_COLS = ['#cc2222','#228833','#cc2222','#228833','#cc2222','#228833','#cc2222','#228833','#cc2222'];
+
+function cardFaceSVG(card) {
+  const W=42, H=60;
+  if (card.type==='blank') {
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${W}" height="${H}" rx="4" fill="#f8f8f2" stroke="#aaa" stroke-width="1"/>
+      <rect x="2.5" y="2.5" width="${W-5}" height="${H-5}" rx="2" fill="none" stroke="#ccc" stroke-width="1"/>
+      <rect x="5" y="5" width="${W-10}" height="${H-10}" rx="1" fill="none" stroke="#ddd" stroke-width=".5"/>
+      <text x="${W/2}" y="${H*0.58}" text-anchor="middle" font-size="16" fill="#aaa"
+            font-family="serif" font-weight="bold">白</text>
+      <text x="${W/2}" y="${H*0.78}" text-anchor="middle" font-size="9" fill="#bbb" font-family="serif">板</text>
+    </svg>`;
+  }
+
+  const v = card.value;
+  const positions = PIPS[v] || [];
+  const r = v===1 ? 11 : v<=2 ? 9 : v<=5 ? 8 : v<=7 ? 7 : 6;
+
+  let pipsSVG = positions.map((pos, i) => {
+    const cx = pos[0] * W / 100;
+    const cy = pos[1] * H / 100;
+    const col = PIP_COLS[i];
+    const darkCol = col==='#cc2222' ? '#990000' : '#005500';
+    if (v===1) {
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" stroke="${darkCol}" stroke-width="1.5"/>
+              <circle cx="${cx}" cy="${cy}" r="${r*0.55}" fill="rgba(255,255,255,.35)"/>
+              <circle cx="${cx}" cy="${cy}" r="${r*0.2}" fill="rgba(255,255,255,.6)"/>`;
+    }
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${col}" stroke="${darkCol}" stroke-width="1"/>
+            <circle cx="${cx}" cy="${cy}" r="${r*0.45}" fill="rgba(255,255,255,.3)"/>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    <rect width="${W}" height="${H}" rx="4" fill="#fff" stroke="#ccc" stroke-width="1"/>
+    ${pipsSVG}
+    <text x="2" y="10" font-size="8" fill="#bbb" font-family="sans-serif">${card.label}</text>
+  </svg>`;
+}
+
+function cardBackSVG() {
+  return `<svg viewBox="0 0 42 60" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="bp" patternUnits="userSpaceOnUse" width="7" height="7">
+        <line x1="0" y1="0" x2="7" y2="7" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        <line x1="7" y1="0" x2="0" y2="7" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="42" height="60" rx="4" fill="#1d6b14"/>
+    <rect x="2.5" y="2.5" width="37" height="55" rx="2" fill="#1a5e12"/>
+    <rect x="2.5" y="2.5" width="37" height="55" rx="2" fill="url(#bp)"/>
+  </svg>`;
+}
+
+function makeCard(card, faceDown) {
+  const div = document.createElement('div');
+  div.className = 'card ' + (faceDown ? 'card-back' : 'card-face');
+  div.innerHTML = faceDown ? cardBackSVG() : cardFaceSVG(card);
+  return div;
+}
+
+// ═══════════════════════════════════════════════
+// GAME FLOW
+// ═══════════════════════════════════════════════
+function initShoe() {
+  G.deck = shuffle(createDeck());
+  G.roundInShoe = 0;
+  toast('新靴開始，洗牌完成！');
+}
+
+function startNewRound() {
+  G.phase = 'DEAL_PREP';
+  G.hands = {dealer:[],shun:[],tian:[],di:[]};
+  G.bets  = {shun:0,tian:0,di:0};
+  G.results = {shun:null,tian:null,di:null};
+  clearResultBadges();
+  clearCards();
+  clearScores();
+  renderBets();
+  updateCurrentBet();
+  renderButtons();
+  showDice();
+}
+
+function showDice() {
+  const d1 = Math.ceil(Math.random()*6);
+  const d2 = Math.ceil(Math.random()*6);
+  const DICE_EMOJI = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+  const row = document.getElementById('dice-row');
+  row.innerHTML = '';
+  [d1,d2].forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'die';
+    el.textContent = DICE_EMOJI[d-1];
+    row.appendChild(el);
+  });
+  document.getElementById('dice-total').textContent = `骰子點數：${d1+d2}`;
+  const overlay = document.getElementById('dice-overlay');
+  overlay.style.display = 'flex';
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    dealCards();
+  }, 1600);
+}
+
+function dealCards() {
+  ['dealer','shun','tian','di'].forEach(pos => {
+    G.hands[pos] = [G.deck.pop(), G.deck.pop()];
+  });
+  G.roundInShoe++;
+  updateShoeBar();
+  renderCards(true); // face down
+  G.phase = 'BETTING';
+
+  if (G.autoBet && canDoAutoRepeat()) {
+    setTimeout(() => {
+      G.bets = {...G.lastBets};
+      renderBets();
+      updateCurrentBet();
+      setTimeout(confirmBet, 600);
+    }, 400);
+  } else {
+    flashStartBet();
+    renderButtons();
+  }
+}
+
+function flashStartBet() {
+  const el = document.getElementById('start-bet-overlay');
+  el.style.display = 'flex';
+  setTimeout(() => { el.style.display = 'none'; }, 1100);
+}
+
+function placeBet(zone) {
+  if (G.phase !== 'BETTING') return;
+  const amount = G.chips[G.selChip];
+  const totalAfter = G.bets.shun + G.bets.tian + G.bets.di + amount;
+  if (G.bets[zone] + amount > MAX_BET) { toast('超過最大下注限制'); return; }
+  if (totalAfter > G.balance)           { toast('餘額不足'); return; }
+  G.bets[zone] += amount;
+  renderBets();
+  updateCurrentBet();
+}
+
+function cancelBet() {
+  if (G.phase !== 'BETTING') return;
+  G.bets = {shun:0,tian:0,di:0};
+  renderBets();
+  updateCurrentBet();
+}
+
+function confirmBet() {
+  if (G.phase !== 'BETTING') return;
+  const total = G.bets.shun + G.bets.tian + G.bets.di;
+  if (total < MIN_BET) {
+    toast('請先在任一區域下注');
+    document.getElementById('zones-area').classList.add('shake');
+    setTimeout(() => document.getElementById('zones-area').classList.remove('shake'), 400);
+    return;
+  }
+  G.phase = 'REVEAL';
+  renderButtons();
+  setBanner('開牌中...');
+  setTimeout(() => {
+    renderCards(false); // flip
+    setTimeout(settle, 700);
+  }, 200);
+}
+
+function settle() {
+  G.phase = 'SETTLEMENT';
+
+  let delta = 0;
+  ZONE_KEYS.forEach(z => {
+    const bet = G.bets[z];
+    if (!bet) { G.results[z] = null; return; }
+
+    const won = playerBeatsDealer(G.hands[z], G.hands.dealer);
+    G.results[z] = won ? 'win' : 'lose';
+    delta += won ? bet : -bet;
+
+    const ts = new Date().toLocaleString('zh-TW',{timeZone:'Asia/Taipei'});
+    G.history.unshift({
+      order_id: `1a91023700_${Date.now()}_${z}`,
+      timestamp: ts,
+      bet_area: {shun:'順門',tian:'天門',di:'地門'}[z],
+      bet_amount: bet,
+      payout: won ? bet*2 : 0,
+      net_win_loss: won ? `+${bet}` : `-${bet}`,
+    });
+  });
+  G.history = G.history.slice(0, 100);
+
+  G.balance += delta;
+  if (G.balance < 0) G.balance = 0;
+
+  G.trends.unshift({
+    shun: G.results.shun === 'win',
+    tian: G.results.tian === 'win',
+    di:   G.results.di   === 'win',
+  });
+  G.trends = G.trends.slice(0, 100);
+
+  G.lastBets   = {...G.bets};
+  G.canRepeat  = true;
+
+  if (G.autoBet && G.balance < MIN_BET) {
+    G.autoBet = false;
+    toast('餘額不足，自動下注已關閉');
+  }
+
+  renderResultBadges();
+  renderButtons();
+  renderTrend();
+  renderBalance();
+  setBanner('結算完成');
+
+  if (G.autoBet) setTimeout(nextRound, 1800);
+}
+
+function nextRound() {
+  if (G.phase !== 'SETTLEMENT') return;
+  if (!G.autoBet) G.canRepeat = false; // manual Next: disable repeat button for new round
+
+  if (G.roundInShoe >= ROUNDS_PER_SHOE) {
+    initShoe();
+  }
+  startNewRound();
+}
+
+function repeatBet() {
+  if (G.phase !== 'BETTING') return;
+  if (!G.canRepeat) return;
+  const total = G.lastBets.shun + G.lastBets.tian + G.lastBets.di;
+  if (!total)             { toast('沒有上局下注紀錄'); return; }
+  if (total > G.balance)  { toast('餘額不足，無法重複下注'); return; }
+  G.bets = {...G.lastBets};
+  renderBets();
+  updateCurrentBet();
+}
+
+function canDoAutoRepeat() {
+  const total = G.lastBets.shun + G.lastBets.tian + G.lastBets.di;
+  return total > 0 && total <= G.balance;
+}
+
+function selectChip(idx) {
+  G.selChip = idx;
+  renderChips();
+}
+
+function toggleAutoBet() {
+  if (!G.autoBet && G.balance < MIN_BET) { toast('餘額不足'); return; }
+  G.autoBet = !G.autoBet;
+  document.getElementById('auto-btn').classList.toggle('on', G.autoBet);
+
+  if (G.autoBet) {
+    if (G.phase === 'BETTING' && canDoAutoRepeat()) {
+      G.bets = {...G.lastBets};
+      renderBets();
+      updateCurrentBet();
+      setTimeout(confirmBet, 500);
+    } else if (G.phase === 'BETTING') {
+      toast('請先手動下注確認一局，之後將自動重複');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// UI RENDERING
+// ═══════════════════════════════════════════════
+function setBanner(txt) {
+  document.getElementById('bet-banner').textContent = txt;
+}
+
+function clearCards() {
+  ['dealer-cards','cards-shun','cards-tian','cards-di'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+  });
+  document.getElementById('dealer-score-label').textContent = '';
+}
+
+function clearScores() {
+  ZONE_KEYS.forEach(z => { document.getElementById('score-'+z).textContent = ''; });
+}
+
+function renderCards(faceDown) {
+  const map = {
+    dealer: 'dealer-cards',
+    shun: 'cards-shun',
+    tian: 'cards-tian',
+    di:   'cards-di',
+  };
+  Object.entries(map).forEach(([pos, elId]) => {
+    const el = document.getElementById(elId);
+    el.innerHTML = '';
+    G.hands[pos].forEach(card => el.appendChild(makeCard(card, faceDown)));
+  });
+
+  if (!faceDown) {
+    // Show scores
+    const dl = handLabel(G.hands.dealer);
+    document.getElementById('dealer-score-label').textContent = dl;
+
+    // Tianwang effect for dealer
+    if (evalHand(G.hands.dealer).rank === 'tianwang') {
+      document.querySelectorAll('#dealer-cards .card').forEach(c => c.classList.add('tianwang-card'));
+    }
+
+    ZONE_KEYS.forEach(z => {
+      const lbl = handLabel(G.hands[z]);
+      document.getElementById('score-'+z).textContent = lbl;
+      if (evalHand(G.hands[z]).rank === 'tianwang') {
+        document.querySelectorAll(`#cards-${z} .card`).forEach(c => c.classList.add('tianwang-card'));
+      }
+    });
+  }
+}
+
+function renderResultBadges() {
+  clearResultBadges();
+  ZONE_KEYS.forEach(z => {
+    if (!G.results[z]) return;
+    const zoneEl = document.getElementById('zone-'+z);
+    const badge = document.createElement('div');
+    badge.className = 'result-badge ' + G.results[z];
+    badge.textContent = G.results[z]==='win' ? '贏' : '輸';
+    zoneEl.appendChild(badge);
+    if (G.results[z]==='win') zoneEl.classList.add('win-flash');
+  });
+}
+
+function clearResultBadges() {
+  document.querySelectorAll('.result-badge').forEach(el => el.remove());
+  ZONE_KEYS.forEach(z => document.getElementById('zone-'+z).classList.remove('win-flash'));
+}
+
+function renderBets() {
+  ZONE_KEYS.forEach(z => {
+    const b = G.bets[z];
+    document.getElementById('bet-'+z).textContent = b ? b.toLocaleString() : '0';
+  });
+}
+
+function updateCurrentBet() {
+  const tot = G.bets.shun + G.bets.tian + G.bets.di;
+  document.getElementById('s-cur').textContent = tot.toLocaleString();
+}
+
+function renderBalance() {
+  document.getElementById('player-bal').textContent =
+    G.balance.toLocaleString('zh-TW', {minimumFractionDigits:2});
+}
+
+function updateShoeBar() {
+  const remaining = ROUNDS_PER_SHOE - G.roundInShoe;
+  document.getElementById('shoe-fill').style.width = (remaining/ROUNDS_PER_SHOE*100)+'%';
+  document.getElementById('shoe-label').textContent = `第${G.roundInShoe}/${ROUNDS_PER_SHOE}局`;
+}
+
+function renderButtons() {
+  const isBet  = G.phase === 'BETTING';
+  const isSett = G.phase === 'SETTLEMENT';
+  const canRep = isBet && G.canRepeat && (G.lastBets.shun+G.lastBets.tian+G.lastBets.di) > 0;
+
+  setBtn('btn-next',    isSett, false);
+  setBtn('btn-cancel',  isBet,  false);
+  setBtn('btn-confirm', isBet,  false);
+  setBtn('btn-repeat',  canRep, true);
+
+  // Zone clickability
+  ZONE_KEYS.forEach(z => {
+    const el = document.getElementById('zone-'+z);
+    el.classList.toggle('bettable', isBet);
+  });
+
+  setBanner(isBet ? '請下注' : isSett ? '結算完成' : G.phase==='DEAL_PREP' ? '發牌中...' : '開牌中...');
+}
+
+function setBtn(id, active, isChipBtn) {
+  const el = document.getElementById(id);
+  el.disabled = !active;
+  el.classList.toggle('off', !active);
+}
+
+function renderChips() {
+  G.chips.forEach((v, i) => {
+    const el = document.getElementById('cv'+i);
+    el.textContent = v >= 10000 ? (v/10000)+'萬' : v >= 1000 ? (v/1000)+'K' : v;
+    el.classList.toggle('sel', i === G.selChip);
+  });
+}
+
+function renderTrend() {
+  const DISP = 9;
+  ZONE_KEYS.forEach(z => {
+    const el = document.getElementById('tr-'+z);
+    el.innerHTML = '';
+    // oldest → newest, left → right; new entries extend rightward
+    const recent = G.trends.slice(0, DISP).reverse(); // oldest first
+    recent.forEach(round => {
+      const c = document.createElement('div');
+      const won = round[z];
+      c.className = 'tcell ' + (won ? 'tw' : 'tl');
+      c.textContent = won ? '✓' : '✗';
+      el.appendChild(c);
+    });
+    // Pad remaining slots on the RIGHT with dashes
+    const padCount = DISP - recent.length;
+    for (let i = 0; i < padCount; i++) {
+      const c = document.createElement('div');
+      c.className = 'tcell te'; c.textContent = '-';
+      el.appendChild(c);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════
+let sidebarOpen = false;
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').style.display = sidebarOpen ? 'flex' : 'none';
+}
+function closeSidebar() {
+  sidebarOpen = false;
+  document.getElementById('sidebar').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+function openModal(title, contentHTML) {
+  closeModal();
+  closeSidebar();
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.id = 'modal-overlay';
+  ov.onclick = e => { if (e.target===ov) closeModal(); };
+  const m = document.createElement('div');
+  m.className = 'modal';
+  m.innerHTML = `
+    <div class="modal-title">${title}</div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    ${contentHTML}
+  `;
+  ov.appendChild(m);
+  document.body.appendChild(ov);
+  return m;
+}
+
+function closeModal() {
+  const el = document.getElementById('modal-overlay');
+  if (el) el.remove();
+}
+
+// Settings
+function openSettings() {
+  openModal('設置', `
+    <div class="settings-row">
+      <label>🎵 背景音樂</label>
+      <input type="range" min="0" max="1" step="0.05" value="${G.musicVol}"
+        oninput="G.musicVol=+this.value">
+    </div>
+    <div class="settings-row">
+      <label>🔊 音效</label>
+      <input type="range" min="0" max="1" step="0.05" value="${G.sfxVol}"
+        oninput="G.sfxVol=+this.value">
+    </div>
+  `);
+}
+
+// Chip editor
+function openChipEditor() {
+  openModal('籌碼設定', `
+    <p style="font-size:13px;color:#666;margin-bottom:4px">自訂三種籌碼面額（1 ~ 150,000）：</p>
+    <div class="chip-edit-wrap">
+      ${[0,1,2].map(i=>`
+        <div class="chip-edit-group">
+          <label>籌碼 ${i+1}</label>
+          <input type="number" id="cinp${i}" value="${G.chips[i]}" min="1" max="${MAX_BET}">
+        </div>
+      `).join('')}
+    </div>
+    <button class="modal-save-btn" onclick="saveChips()">確認</button>
+  `);
+}
+
+function saveChips() {
+  const vals = [0,1,2].map(i => {
+    const v = parseInt(document.getElementById('cinp'+i).value);
+    return (isNaN(v)||v<1) ? G.chips[i] : Math.min(v, MAX_BET);
+  });
+  G.chips = vals;
+  renderChips();
+  closeModal();
+  toast('籌碼已更新');
+}
+
+// Rules
+function openRules() {
+  openModal('遊戲說明', `
+    <div class="rule-body">
+      <h4>❶ 遊戲玩法</h4>
+      <p>一局使用一筒到九筒、白板各 4 張，共 40 張牌，2 顆骰子。
+         由系統當莊家，玩家可選擇下注【順門】【天門】【地門】。</p>
+      <h4>❷ 點數計算</h4>
+      <p>兩張牌點數相加取個位數為點數。白板算 <b>0.5 點</b>（例：9筒+白板 = 九點半）。
+         合計為 0 點（如 4筒+6筒=10）稱為「<span class="hl">鱉十</span>」。</p>
+      <h4>❸ 牌型排名（大→小）</h4>
+      <p><span class="hl">天王</span>（白板對）＞
+         <span class="hl">對子</span>（九寶…一寶）＞
+         <span class="hl">點數</span>（九點半…一點）＞
+         <span class="hl">鱉十</span></p>
+      <h4>❹ 勝負比較</h4>
+      <p>① 先比牌型；② 同牌型比點數；③ 同點數比最大單張。</p>
+      <p style="margin-top:6px"><span class="hl">莊家絕對優勢：</span>任何平手均判莊家勝。
+         莊閒同為鱉十時，莊家勝。本遊戲<b>無和局</b>。</p>
+      <h4>❺ 結算</h4>
+      <p>贏：派彩 1 賠 1（含本金退回）。輸：扣除下注金額。</p>
+    </div>
+  `);
+}
+
+// History
+function openHistory() {
+  let rows = '';
+  if (!G.history.length) {
+    rows = `<tr><td colspan="5" class="hist-empty">暫無下注紀錄</td></tr>`;
+  } else {
+    rows = G.history.map(r => `
+      <tr class="${r.net_win_loss.startsWith('+') ? 'hist-win' : 'hist-lose'}">
+        <td style="font-size:10px">${r.order_id.slice(-6)}</td>
+        <td>${r.bet_area}</td>
+        <td>${r.bet_amount.toLocaleString()}</td>
+        <td>${r.payout.toLocaleString()}</td>
+        <td>${r.net_win_loss}</td>
+      </tr>
+    `).join('');
+  }
+
+  openModal('紀錄', `
+    <p style="font-size:11px;color:#999;margin-bottom:8px">查詢時間：UTC+8</p>
+    <table class="hist-table">
+      <thead>
+        <tr><th>注單</th><th>投注</th><th>下注</th><th>派彩</th><th>輸贏</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `);
+}
+
+// Trend panel
+function openTrendPanel() {
+  if (!G.trends.length) {
+    openModal('走勢統計', '<p style="text-align:center;padding:24px;color:#aaa">尚無資料</p>');
+    return;
+  }
+  const zoneNames = {shun:'順門', tian:'天門', di:'地門'};
+  let html = '';
+  ZONE_KEYS.forEach(z => {
+    const wins  = G.trends.filter(r => r[z]).length;
+    const total = G.trends.length;
+    const pct   = ((wins/total)*100).toFixed(1);
+    const dots  = G.trends.map(r =>
+      `<span class="trend-dot ${r[z]?'w':'l'}">${r[z]?'✓':'✗'}</span>`
+    ).join('');
+    html += `
+      <div class="trend-stat-zone">
+        <h4>${zoneNames[z]}</h4>
+        <div class="trend-pct">勝率 ${pct}%（${wins} 勝 / ${total} 局）</div>
+        <div class="trend-dots">${dots}</div>
+      </div>
+    `;
+  });
+  openModal('走勢統計', html);
+}
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let _toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 2200);
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+function init() {
+  document.getElementById('s-min').textContent = MIN_BET.toLocaleString();
+  document.getElementById('s-max').textContent = MAX_BET.toLocaleString();
+  renderChips();
+  renderBalance();
+  renderTrend();
+
+  // Tap outside sidebar to close
+  document.getElementById('game').addEventListener('click', e => {
+    if (sidebarOpen && !e.target.closest('#sidebar') && !e.target.closest('.menu-icon'))
+      closeSidebar();
+  });
+
+  initShoe();
+  startNewRound();
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
